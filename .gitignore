@@ -1,0 +1,14 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+/.quarto/
+.httr-oauth
+.DS_Store
+.quarto
+posts/Fertility/*.knit.md
+posts/Fertility/fertility-final.knit.md
+*.knit.html
+_site/
+.quarto/
