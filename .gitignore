@@ -12,3 +12,6 @@ posts/Fertility/fertility-final.knit.md
 *.knit.html
 _site/
 .quarto/
+*.knit.html
+*.knit.md
+**/fertility-final.knit.*

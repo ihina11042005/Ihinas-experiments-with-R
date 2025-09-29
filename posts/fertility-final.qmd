@@ -327,13 +327,6 @@ crosstable(mother_age + work_weeks ~ havemorekids+children_gender + ethnicity,
 
 ------------------------------------------------------------------------
 
-## Tiny Table:
-
-```{r}
-Fertility_2 %>% 
-  tt()
-```
-
 ## Conclusion
 
 Our exploratory analysis shows that fertility and mothers' participation in the workforce are shaped by many overlapping factors such as age, ethnicity, family structure, and cultural norms.
