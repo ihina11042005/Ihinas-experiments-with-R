@@ -1,0 +1,156 @@
+---
+title: "statistics"
+format: html
+---
+
+difference between statistics and probability. Probability is rule in the world, statistic shows up as an event. Rules tell you what happens and the regularity of it. The measurement of what happens is the statistic - the statistic is surprising (inference) Target audience - sample Caste survey - Karnataka calculate for population - parameter, similarly for sample - statistic, estimate population parameters -ve/+ve difference is looked at w the MAGNITUDE of difference NHANES Dataset probability= relative frequency narrower distribution of means - more accurate by taking multiple samples of multiple lengths, means are scattered on either side of population mean larger sample - narrower mean spread, smaller sample - larger mean spread
+
+**Central Limit Theorem** - the sample-means are normally distributed around the population mean. So any mean of a single sample is a good, unbiased estimate for the pop_mean. the sample-mean distributions are centered around the pop_mean and have a standard deviation that is inversely proportional to the square root of the sample size. sampling again sampling with replacement.
+
+distribution/ spread is bell curve
+Six sigma= +-3
++-1 = 6 six, sigma =1/3
+sigma compliant
+
+
+##Libraries
+
+```{r}
+library(tidyverse) # Data Processing in R
+library(mosaic) # Our workhorse for stats, sampling
+library(janitor) # Data Cleaning
+library(skimr) # Good to Examine data
+library(ggformula) # Formula interface for graphs
+
+# load the NHANES data library
+library(NHANES)
+library(infer)
+```
+
+##Data
+
+```{r}
+data("NHANES")
+NHANES_adult <-
+  NHANES %>%
+  distinct(ID, .keep_all = TRUE) %>%
+  filter(Age >= 18) %>%
+  select(Height) %>%
+  drop_na(Height)
+NHANES_adult %>% glimpse()
+```
+
+```{r}
+# NHANES_adult is assumed population
+pop_mean <- mosaic::mean(~Height, data = NHANES_adult)
+pop_sd <- mosaic::sd(~Height, data = NHANES_adult)
+pop_mean
+```
+
+```{r}
+pop_sd
+```
+
+```{r}
+set.seed(12345)
+samples_08_1000 <- do(1000) * resample(NHANES_adult$Height,
+  size = 08
+) %>% mean()
+samples_08_1000
+set.seed(12345)
+samples_16_1000 <- do(1000) * resample(NHANES_adult$Height,
+  size = 16
+) %>% mean()
+samples_16_1000
+set.seed(12345)
+samples_32_1000 <- do(1000) * resample(NHANES_adult$Height,
+  size = 32
+) %>% mean()
+samples_32_1000
+set.seed(12345)
+samples_64_1000 <- do(1000) * resample(NHANES_adult$Height,
+  size = 64
+) %>% mean()
+samples_64_1000
+```
+
+```{r}
+# Let us overlay their individual histograms to compare them:
+p5 <- gf_dhistogram(~result,
+  data = samples_08_1000,
+  color = "grey",
+  fill = "dodgerblue", title = "N = 8"
+) %>%
+  gf_fitdistr(linewidth = 1) %>%
+  gf_vline(
+    xintercept = pop_mean, inherit = FALSE,
+    color = "blue"
+  ) %>%
+  gf_label(-0.025 ~ pop_mean,
+    label = "Population Mean",
+    color = "blue"
+  ) %>%
+  gf_theme(scale_y_continuous(expand = expansion(mult = c(0.08, 0.02))))
+##
+p6 <- gf_dhistogram(~result,
+  data = samples_16_1000,
+  color = "grey",
+  fill = "sienna", title = "N = 16"
+) %>%
+  gf_fitdistr(linewidth = 1) %>%
+  gf_vline(
+    xintercept = pop_mean,
+    color = "blue"
+  ) %>%
+  gf_label(-.025 ~ pop_mean,
+    label = "Population Mean",
+    color = "blue"
+  ) %>%
+  gf_theme(scale_y_continuous(expand = expansion(mult = c(0.08, 0.02))))
+##
+p7 <- gf_dhistogram(~result,
+  data = samples_32_1000,
+  na.rm = TRUE,
+  color = "grey",
+  fill = "palegreen", title = "N = 32"
+) %>%
+  gf_fitdistr(linewidth = 1) %>%
+  gf_vline(
+    xintercept = pop_mean,
+    color = "blue"
+  ) %>%
+  gf_label(-.025 ~ pop_mean,
+    label = "Population Mean", color = "blue"
+  ) %>%
+  gf_theme(scale_y_continuous(expand = expansion(mult = c(0.08, 0.02))))
+
+p8 <- gf_dhistogram(~result,
+  data = samples_64_1000,
+  na.rm = TRUE,
+  color = "grey",
+  fill = "violetred", title = "N = 64"
+) %>%
+  gf_fitdistr(linewidth = 1) %>%
+  gf_vline(
+    xintercept = pop_mean,
+    color = "blue"
+  ) %>%
+  gf_label(-.025 ~ pop_mean,
+    label = "Population Mean", color = "blue"
+  ) %>%
+  gf_theme(scale_y_continuous(expand = expansion(mult = c(0.08, 0.02))))
+
+# patchwork::wrap_plots(p5,p6,p7,p8)
+p5
+p6
+p7
+p8
+```
+
+```{r}
+pop_sd
+sd(~result, data = samples_08_1000)
+sd(~result, data = samples_16_1000)
+sd(~result, data = samples_32_1000)
+sd(~result, data = samples_64_1000)
+```

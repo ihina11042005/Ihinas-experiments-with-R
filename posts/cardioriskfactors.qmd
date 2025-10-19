@@ -1,0 +1,219 @@
+---
+title: "A2 Part 3 - Cardio Risk Factors"
+format: html
+author: Ihina, Nikhita, Rishi
+---
+
+# Dataset: Cardio Risk Factors
+
+## Data Dictionary
+
+|  |  |  |
+|------------------------|------------------------|------------------------|
+| **Variable** | **Description (Cardiovascular Risk Context)** | **Typical Units / Notes** |
+| age | Age of the individual; risk generally increases with age | years |
+| bmi | Body Mass Index; higher BMI is a risk factor for heart disease | kg/m² |
+| waisthip | Waist-to-hip ratio; central obesity increases cardiovascular risk | ratio (waist ÷ hip) |
+| smok | Smoking status; major modifiable risk factor | 0 = non-smoker, 1 = smoker (or categorical) |
+| choles | Total cholesterol; elevated levels linked to atherosclerosis | mg/dL or mmol/L |
+| trig | Triglycerides; high levels can contribute to heart disease | mg/dL or mmol/L |
+| hdl | High-density lipoprotein (“good cholesterol”); protective against heart disease | mg/dL or mmol/L |
+| ldl | Low-density lipoprotein (“bad cholesterol”); high levels increase risk | mg/dL or mmol/L |
+| sys | Systolic blood pressure; high values = hypertension risk | mmHg |
+| dia | Diastolic blood pressure; high values = hypertension risk | mmHg |
+| uric | Uric acid level; elevated levels can be associated with cardiovascular disease | mg/dL or µmol/L |
+| sex | Biological sex; men and women have different risk profiles | 0 = female, 1 = male |
+| alco | Alcohol consumption; excessive intake increases risk | units/week or categorical (yes/no) |
+| apoa | Apolipoprotein A; component of HDL, protective against heart disease | mg/dL |
+
+In most cardiovascular disease datasets sex is a binary variable coded as 0 and 1, usually, 0 is the reference category and 1 represents the comparison group.
+
+Women are frequently used as the baseline in cardiovascular research because males tend to show higher baseline prevalence and earlier onset of CVD.
+
+Thus we have assumed 0= Female, 1 = Male
+
+### Setting up the Libraries:
+
+```{r}
+library(tidyverse)
+library(mosaic) # Our trusted friend
+library(skimr)
+library(ggformula) # Formula interface to ggplot2
+library(vcd) # Michael Friendly's package, Visualizing Categorical
+library(vcdExtra) # Categorical Data Sets
+library(resampledata) # More datasets
+library(visStatistics) # Comprehensive all-in-one stats viz/test package
+library(ggmosaic) # Tidy Mosaic Plots
+library(ggpubr) # Colours, Themes and new geometries in ggplot
+library(janitor) # Data Cleaning and Tidying
+library(visdat) # Visualize whole dataframes for missing data
+library(naniar) # Clean missing data
+library(DT) # Interactive Tables for our data
+library(tinytable) # Elegant Tables for our data
+library(ggrepel) # Repelling Text Labels in ggplot
+library(marquee) # Marquee Text in ggplot
+library(knitr)
+```
+
+### Reading the Data:
+
+```{r}
+cardioriskfactors <- CardioDataSets::cardioRiskFactors_df
+cardioriskfactors
+```
+
+```{r}
+glimpse(cardioriskfactors)
+```
+
+### Checking for missing data:
+
+```{r}
+vis_dat(cardioriskfactors)
+vis_miss(cardioriskfactors)
+```
+
+### Mutating the data:
+
+```{r}
+cardio_mod1 <- cardioriskfactors %>%
+  mutate(across(where(is.character), as.factor)
+  ) %>% 
+  mutate(sex = as.factor(sex),
+    smok=as.factor(smok))
+cardio_mod1
+```
+
+### Correlation between Age and Cholesterol:
+
+```{r}
+cardio_mod1 %>%
+gf_point(choles ~ age, data = cuisines_modified, color = 'maroon', size = 2) %>%
+  gf_lm(color = 'black') %>% 
+  gf_labs(title = "Correlation Between Age and Cholesterol",
+          x = "Age",
+          y = "Total Cholesterol")
+
+```
+
+There is a slight positive correlation between age and cholesterol. More the age, higher the cholesterol. The data also seems to be spread out, great variability.
+
+### Age Distribution:
+
+```{r}
+ggplot(cardio_mod1, aes(x = age)) +
+  geom_histogram(fill = "#69b3a2", color = "black", bins = 32) +
+  labs(
+    title = "Age Distribution of people",
+    x = "Age (years)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+Count of people across ages is fairly distributed.
+
+### Association between sex and smoking status:
+
+```{r}
+vcd::structable(data = cardio_mod1, sex ~ smok) %>% 
+  as.matrix() %>%  
+  addmargins()
+```
+
+```{r}
+vcd::structable(sex ~ smok, data = cardio_mod1) %>%
+    vcd::mosaic(gp = shading_max)
+```
+
+There is a significant association between sex and smoking status.
+
+This graph suggests that there are far more non-smoking females than expected as well as more smoking males than expected.
+
+Males are significantly more likely to be smokers than females in this dataset
+
+### BMI Distribution by Sex:
+
+```{r}
+ggplot(cardio_mod1, aes(x = factor(sex), y = bmi, fill = factor(sex))) +
+  geom_boxplot(alpha = 0.8) +
+  labs(
+    title = "BMI Distribution by Sex",
+    x = "Sex (0 = Female, 1 = Male)",
+    y = "Body Mass Index (BMI)"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+```
+
+According to this graph, females have higher BMI than males, and a more varied distribution + more outliers.
+
+### Smoking Status and Sex:
+
+```{r}
+cardio_mod1 %>%
+  gf_boxplot(sys ~ smok | sex, orientation = "x", fill = ~factor(sex)) %>%
+  gf_labs(
+    title = "Blood Pressure by Smoking Status and Sex",
+    x = "Smoking Status",
+    y = "Systolic BP",
+    fill = "Sex: 0 = Female, 1 = Male"
+  ) %>% 
+  gf_refine(scale_fill_brewer(palette = "Pastel1", direction= -1))
+
+```
+
+**Median Blood Pressure Levels:**
+
+-   Female Non-smokers have a slightly higher median (around 130 mmHg) compared to smokers (around 135 mmHg).
+
+-   Males, both non-smokers and smokers have the same median blood pressure (\~137-138 mmHg)
+
+**Sex difference:**
+
+-   Males have higher systolic blood pressure than females across both smoking categories.
+
+-   The distribution patterns are more similar between male groups than between female groups.
+
+The lack of strong smoking effect is surprising, as smoking is typically associated with cardiovascular risks.
+
+```{r}
+cardio_mod1 %>% 
+  gf_boxplot(choles ~ factor(smok) | factor(sex),
+             fill = ~factor(smok),
+             orientation = "x") %>%  
+  gf_labs(
+    title = "Cholesterol by Smoking Status and Sex",
+    x = "Smoking Status",
+    y = "Cholesterol Level",
+    fill = "Smoking Status"
+  )
+
+```
+
+**Median Cholesterol Levels:**
+
+-   For females (0): Non-smokers and smokers have almost the same median cholesterol levels (around 5.7)
+
+-   For males (1): Non-smokers have a slightly higher median (around 5.5) compared to smokers (around 5.2
+
+    **Distribution:**
+
+-   Female non-smokers show greater variability in cholesterol levels with 3 outliers above 10 mg/DL
+
+-   Male non-smokers also display more spread in their data compared to male smokers. Smokers (both sexes) have fewer extreme values
+
+    **Sex Differences:** Females generally have higher cholesterol levels than males across both smoking categories. Females show more cases of upper outliers. The shorter line (whisker) for female smokers indicates a smaller range of cholesterol values compared to female non-smokers.
+
+## Summary:
+
+-   Males demonstrate substantially higher smoking rates than females, while females exhibit elevated BMI, more variable cholesterol distributions, and greater outlier prevalence across multiple health metrics. 
+
+-   Age shows a positive correlation with cholesterol levels. 
+
+-   Males have higher systolic blood pressure overall, though females display more blood pressure outliers. 
+
+-   Surprisingly, smoking status shows minimal impact on blood pressure and cholesterol levels within sex groups, suggesting other factors may play stronger roles in cardiovascular health outcomes. 
+
+-   The age distribution remains fairly uniform across the sample population.

@@ -1,0 +1,236 @@
+---
+title: "A2 Part 4 -Migration"
+format: html
+author: Ihina, Nikhita, Rishi
+---
+
+# Peregrine Falcon Migration (1973-75)
+
+## Bill Cochran Study
+
+This study tracked peregrine falcon migration patterns using early radio telemetry technology, revolutionizing our understanding of raptor movement and navigation.
+
+This research provided the first detailed documentation of individual falcon migration routes, flight speeds, and stopover behaviours across North America.
+
+![](images/clipboard-4078089510.png)
+
+### Setting up Libraries:
+
+```{r}
+library(rnaturalearth)
+library(rnaturalearthdata)
+
+# Run this in your console first
+# devtools::install_github("ropensci/rnaturalearthhires")
+library(rnaturalearthhires)
+
+# Plotting Maps
+library(tidyverse) # Maps using ggplot() + geom_sf()
+library(ggformula) # Maps using gf_sf()
+library(tmap) # Thematic Maps, static and interactive
+library(tmaptools)
+library(tmap.mapgl)
+library(osmdata) # Fetch map data from osmdata.org
+library(sfheaders) # Handcrafted Map data
+## Interactive Maps
+library(leaflet) # interactive Maps
+library(leaflet)
+library(leaflet.providers)
+library(leaflet.extras)
+library(threejs) # Globe maps in R. Part of the htmlwidgets family of packages
+
+# For Spatial Data Frame Processing
+library(sf)
+library(lubridate)
+```
+
+### Reading the Data:
+
+```{r}
+lines <- st_read("D:/files from desktop/R/Ihinas-experiments-with-R/posts/bird data/lines.shp")
+points <- st_read("D:/files from desktop/R/Ihinas-experiments-with-R/posts/bird data/points.shp")
+```
+
+### Mapping it out:
+
+```{r}
+ggplot() +
+  geom_sf(data = lines, color = "black", 
+          linewidth = 0.025) +   
+  geom_sf(data = points, color = '#ff9999', linewidth = 0.5) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration (1973–75)",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+
+```
+
+### Let us look at the different Peregrine Falcons:
+
+```{r}
+ggplot() +
+  geom_sf(data = points,aes(color = tag_ident)) +
+  geom_sf(data=lines, color = "black", linewidth= 0.02)+
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration (1973–75)",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+```
+
+All three falcons follow a general north-to-south migration pattern through central North America.
+
+The clustering of points suggests that there are multiple stopover sites where falcons remained stationary for extended periods.
+
+-   Peregrine #5 shows the longest and most extensive migration, traveling the farthest south.
+
+-   Peregrine #1 has a much shorter route, primarily clustered in the northern portion around Peregrine #4 shows a pattern with looping, this suggests that the bird was flying within a relatively small area rather than continuing its migration.
+
+This could mean:
+
+-   Favourable hunting grounds
+
+-   Energy conservation
+
+-   It was waiting for favorable migration conditions
+
+### Plotting this on the world map:
+
+```{r}
+ggplot() +
+  geom_sf(data = World, fill = "grey90", color = "grey") +
+  geom_sf(data = points,aes(color = tag_ident)) +
+  geom_sf(data=lines, color = "black", linewidth= 0.01)+
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration (1973–75)",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+
+```
+
+This shows us that all migration occurs within the central USA.
+
+### Plotting it on the USA map:
+
+```{r}
+ggplot() +
+  geom_sf(data = World %>% filter(name=="United States of America"),
+          fill = "grey90", color = "grey") +
+  geom_sf(data = points,aes(color = tag_ident)) +
+  geom_sf(data=lines, color = "black", linewidth= 0.01)+
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration (1973–75)",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+
+```
+
+The migration corridor appears to avoid both coasts, staying inland.
+
+### How did migration change through the years 1973 - 1975:
+
+Only plotted points(resting locations) and not lines (movement) as there is no timestamp for it.
+
+#### Mutating data:
+
+```{r}
+points_mod1 <- points %>%
+  mutate(
+    year = year(ymd_hms(timestamp)),
+    year_category = case_when(
+      year == 1973 ~ "Year_73",
+      year == 1974 ~ "Year_74",
+      year == 1975 ~ "Year_75",
+      TRUE ~ "Other"
+    )
+  )
+```
+
+#### Migration in 1973:
+
+```{r}
+ggplot() +
+  geom_sf(data = World %>% filter(name=="United States of America"),
+          fill = "grey90", color = "grey") +
+  geom_sf(data = points_mod1 %>% filter(year==1973),
+          aes(color = tag_ident)) +
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration in 1973",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+```
+
+Only Peregrine#1 rested, concentrated in a small area in the central USA.
+
+#### Migration in 1974:
+
+```{r}
+ggplot() +
+  geom_sf(data = World %>% filter(name=="United States of America"),
+          fill = "grey90", color = "grey") +
+  geom_sf(data = points_mod1 %>% filter(year==1974),
+          aes(color = tag_ident)) +
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration in 1974",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+```
+
+Assumption: No falcons rested?? Or no falcons tracked?
+
+#### Migration in 1975:
+
+```{r}
+ggplot() +
+  geom_sf(data = World %>% filter(name=="United States of America"),
+          fill = "grey90", color = "grey") +
+  geom_sf(data = points_mod1 %>% filter(year==1975),
+          aes(color = tag_ident)) +
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration in 1975",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+```
+
+Both Peregrine#4 andPeregrine#5 show multiple rest stops along the migration corridor, this suggests that falcons migrate in stages rather than continuously.
+
+**Assumption:** Peregrine#1 has completed its migration in 1973 itself.
+
+#### Now let's plot it on Mexico, for fun :)
+
+```{r}
+ggplot() +
+  geom_sf(data = World %>% filter(name=="Mexico"),
+          fill = "grey90", color = "grey") +
+  geom_sf(data = points,aes(color = tag_ident)) +
+  geom_sf(data=lines, color = "black", linewidth= 0.01)+
+ theme(
+    axis.text.x = element_text(angle = 45, hjust =2 )
+  ) +
+  coord_sf() +
+  labs(title = "Peregrine Falcon Migration (1973–75)",
+       subtitle = "Bill Cochran Study | Source: Movebank") +
+  theme_minimal()
+```
+
+Interestingly, both the migration pattern and Mexico's angle and shape look kind of similar.

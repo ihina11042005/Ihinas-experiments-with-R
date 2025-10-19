@@ -1,0 +1,169 @@
+---
+title: "counts-quantities"
+format: html
+---
+##Setting up Libraries
+```{r}
+library(tidyverse)
+library(mosaic) # Our trusted friend
+library(skimr)
+library(ggformula) # Formula interface to ggplot2
+library(vcd) # Michael Friendly's package, Visualizing Categorical
+library(vcdExtra) # Categorical Data Sets
+library(resampledata) # More datasets
+library(visStatistics) # Comprehensive all-in-one stats viz/test package
+library(ggmosaic) # Tidy Mosaic Plots
+library(ggpubr) # Colours, Themes and new geometries in ggplot
+library(janitor) # Data Cleaning and Tidying
+library(visdat) # Visualize whole dataframes for missing data
+library(naniar) # Clean missing data
+library(DT) # Interactive Tables for our data
+library(tinytable) # Elegant Tables for our data
+library(ggrepel) # Repelling Text Labels in ggplot
+library(marquee) # Marquee Text in ggplot
+library(knitr)
+```
+
+```{r}
+Arthritis
+```
+
+```{r}
+Arthritis %>% class()
+ftable(data = Arthritis, 
+       Improved ~ Treatment) %>%  # Two-way table
+  as.matrix() %>% # ftable to matrix; 
+# Keeps the names when margins are added
+  addmargins() # Add margins to the table
+ftable(data = Arthritis, 
+       Improved ~ Treatment) %>%  # Two-way table
+  as.matrix() %>% # ftable to matrix; 
+# Keeps the names when margins are added
+  addmargins() %>% # Add margins to the table
+  class()
+ftable(data = Arthritis, 
+       Improved ~ Treatment) %>% # Two-way table)
+  as.matrix() %>% # ftable to matrix; 
+# Keeps the names when margins are added
+  addmargins() %>% # Add margins to the table
+  as_tibble(rownames = "Treatment") # Convert to tibble; ensure row names!
+```
+
+```{r}
+arthritis_table <- vcd::structable(Improved ~ Treatment,
+                                   data = Arthritis)
+arthritis_table
+vcd::mosaic(arthritis_table)
+```
+###Titanic Dataset
+```{r}
+titanic
+```
+```{r}
+titanic %>% class()
+ftable(data = titanic, 
+       Class ~ Survived) %>%
+  as.matrix() %>% 
+  addmargins()
+ftable(data = titanic, 
+       Class ~ Survived) %>%
+  as.matrix() %>% 
+  addmargins() %>%
+  class()
+ftable(data = titanic, 
+      Class ~ Survived) %>% 
+  as.matrix() %>% 
+  addmargins() %>% 
+  as_tibble(rownames = "Treatment") 
+```
+```{r}
+titanic_table <- vcd::structable(Class ~ Survived,
+                                   data = titanic)
+
+vcd::mosaic(titanic_table, 
+            gp = shading_max, direction = "v",
+            main = "Titanic Survival",
+labeling = labeling_border(
+                varnames = c("F", "F"),
+                rot_labels = c(90,0,0,0), 
+                just_labels = c("left", 
+                                "left", 
+                                "left", 
+                                "right"))) 
+```
+```{r}
+titanic_table <- vcd::structable(Survived ~ Class,
+                                   data = titanic)
+vcd::mosaic(titanic_table, 
+            gp = shading_max, direction = "v",
+            main = "Titanic Survival",
+labeling = labeling_border(
+                varnames = c("F", "F"),
+                rot_labels = c(90,0,0,0), 
+                just_labels = c("left", 
+                                "left", 
+                                "left", 
+                                "right"))) 
+
+```
+
+```{r}
+Fertility <- readr::read_delim("https://vincentarelbundock.github.io/Rdatasets/csv/AER/Fertility.csv")
+```
+```{r}
+Fertility_2 <- Fertility %>%
+  mutate(ethnicity = case_when(
+    afam == "yes" & hispanic == "no" & other == "no" ~ "AFAM",
+    afam == "no" & hispanic == "yes" & other == "no" ~ "Hispanic",
+    afam == "no" & hispanic == "no" & other == "yes" ~ "Other",
+    afam == "no" & hispanic == "no" & other == "no" ~ "Caucasian",
+     afam == "yes" & hispanic == "yes" & other == "no" ~ "AFAM+Hispanic",
+     afam == "yes" & hispanic == "no" & other == "yes" ~ "AFAM+Other",
+     afam == "no" & hispanic == "yes" & other == "yes" ~ "Hispanic+Other"
+  )) %>% 
+mutate(children_gender = case_when(
+  gender1== "male" & gender2== "male" ~ "male-male",
+  gender1== "male" & gender2== "female"~ "male-female",
+  gender1== "female" & gender2== "male" ~ "female-male",
+  gender1== "female" & gender2== "female" ~ "female-female"
+)) %>% 
+ 
+ select(-c(gender1, gender2, afam, hispanic, other)) %>% 
+  mutate( morekids = as.factor(morekids),
+          ethnicity = as.factor(ethnicity),
+          children_gender = as.factor(children_gender)) %>% 
+  dplyr::relocate(ethnicity, children_gender, work, morekids, .after=age) %>% 
+rename("mother_age" = age,
+       "work_weeks" = work,
+       "havemorekids"= morekids)
+
+
+Fertility_2
+```
+
+```{r}
+Fertility_table <- vcd::structable(havemorekids ~ children_gender,
+                                   data = Fertility_2)
+vcd::mosaic(Fertility_table, 
+            gp = shading_max, direction = "v",
+            main = "Fertility",
+labeling = labeling_border(
+                varnames = c("F", "F"),
+                rot_labels = c(90,0,0,0), 
+                just_labels = c("left", 
+                                "left", 
+                                "left", 
+                                "right"))) 
+```
+```{r}
+vcd::mosaic(havemorekids ~ children_gender, data = Fertility_2, 
+            direction = "v", gp = shading_max, legend = FALSE)
+vcd::mosaic(havemorekids ~ children_gender, data = Fertility_2, 
+            type = "expected", direction = "v", gp = shading_max, 
+            legend = FALSE)
+vcd::assoc(havemorekids ~ children_gender, 
+           data = Fertility_2, 
+           gp = shading_max, 
+           legend = FALSE) 
+```
+
